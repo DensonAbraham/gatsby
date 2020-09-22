@@ -28,10 +28,12 @@ jobs:
       - run:
           command: yarn bootstrap -- concurrency=<< parameters.concurrency >> --stream
           name: Build monorepo
+      - run:
+          command: node scripts/circleci-local-publish/index.js << pipeline.number >>
+          name: Publish monorepo
       - persist_to_workspace:
           paths:
             - packages/
-            - node_modules
           root: ./
   lint:
     executor: node
@@ -100,7 +102,7 @@ jobs:
           paths:
             - ./.yarn/yarn-offline-cache/
       - run:
-          command: yarn jest --ci --runInBand ((yarn jest --listTests) | Foreach-Object {$_ -replace '.*\\packages', 'packages'} | circleci tests split --split-by=timings)
+          command: yarn jest --ci --runInBand ((yarn jest --listTests) | Foreach-Object {$_ -replace '.*\\packages', 'packages'} | Foreach-Object {$_ -replace '\', '/'} | circleci tests split --split-by=timings)
           environment:
             GENERATE_JEST_REPORT: true
             JEST_JUNIT_OUTPUT_DIR: ./test-results/jest-node/
